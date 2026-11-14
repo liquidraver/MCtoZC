@@ -53,8 +53,10 @@ If a ZephCore repeater volume is already present it just enables DFU.
 (`tests/qemu` runs it on qemu_cortex_m3). `src/lfs1/` is the Adafruit littlefs v1.7 copy, symbols
 renamed `lfs_`→`lfs1_` so it coexists with Zephyr's v2, malloc mapped to libc (BSD-3, see LICENSE).
 
-## Not verified
+## Tested
 
-Built and the v1 reader tested under QEMU. **Not run on hardware**; the v2 write path and the
-bootloader hand-off (`GPREGRET=0xA8`, same mechanism as ZephCore's `zephcore_ble_dfu_request()`) follow
-ZephCore's own formatter/DFU code. Try it on a spare node first.
+- **SoftDevice v7:** run on real hardware (XIAO nRF52840) over MeshCore 1.18.0; the config migrated correctly.
+- **SoftDevice v6:** built and flash-map identical in structure, but **not run on hardware**. It is expected to
+  work the same (only the app start, 0x26000 vs 0x27000, differs), but that is unconfirmed.
+- The littlefs v1 reader is also checked under QEMU (`tests/`).
+- The DFU hand-off (`GPREGRET=0xA8`) is the same mechanism as ZephCore's `zephcore_ble_dfu_request()`.
