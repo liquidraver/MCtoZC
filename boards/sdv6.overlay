@@ -53,6 +53,32 @@
 	status = "disabled";
 };
 
+/*
+ * This image runs on every board with this SoftDevice, so it drives no pin and
+ * turns nothing on that only the base board (nrf52840dk) has: its UARTs, NFC
+ * and DC/DC regulators are off. DC/DC needs the board's inductors; the LDO
+ * works everywhere.
+ */
+&uart0 {
+	status = "disabled";
+};
+
+&uart1 {
+	status = "disabled";
+};
+
+&nfct {
+	status = "disabled";
+};
+
+&reg0 {
+	status = "disabled";
+};
+
+&reg1 {
+	regulator-initial-mode = <NRF5X_REG_MODE_LDO>;
+};
+
 &flash0 {
 	partitions {
 		compatible = "fixed-partitions";
