@@ -204,6 +204,41 @@ static bool blank_or_zero(const uint8_t *p, size_t n)
 	return a == 0 || b == 0xFF;
 }
 
+/*
+ * A MeshCore companion also keeps /_main.id and /prefs.json at the root, so
+ * those do not tell it apart. Its own files do, while they are on this volume;
+ * on boards with QSPI flash it moves contacts, channels and blobs there, and
+ * then only its prefs.json key "man_add" (manual contact add) remains.
+ */
+static const char *const companion_files[] = {
+	"/contacts3", "/channels2", "/adv_blobs", "/new_prefs",
+};
+
+static bool companion_file_present(void)
+{
+	struct lfs1_info info;
+
+	for (size_t i = 0; i < ARRAY_SIZE(companion_files); i++) {
+		if (lfs1_stat(&mc_lfs, companion_files[i], &info) >= 0) {
+			printk("  %s is a MeshCore companion file.\n", companion_files[i]);
+			return true;
+		}
+	}
+	return false;
+}
+
+static bool contains(const uint8_t *buf, size_t len, const char *s)
+{
+	size_t n = strlen(s);
+
+	for (size_t i = 0; i + n <= len; i++) {
+		if (memcmp(buf + i, s, n) == 0) {
+			return true;
+		}
+	}
+	return false;
+}
+
 /* Step 1. Returns 0 when a usable MeshCore repeater volume was read into RAM. */
 static int snapshot_meshcore(void)
 {
@@ -218,9 +253,10 @@ static int snapshot_meshcore(void)
 	list_dir("/identity");
 
 	int err = 0;
+	bool companion = companion_file_present();
 
 	/* The legacy binary prefs only matter when there is no prefs.json. */
-	for (int i = 0; i < IT_COUNT && !err; i++) {
+	for (int i = 0; i < IT_COUNT && !err && !companion; i++) {
 		if (i == IT_LEGACY && items[IT_PREFS].found) {
 			continue;
 		}
@@ -230,6 +266,16 @@ static int snapshot_meshcore(void)
 
 	if (err) {
 		return err;
+	}
+	if (!companion && items[IT_PREFS].found &&
+	    contains(items[IT_PREFS].buf, items[IT_PREFS].len, "\"man_add\"")) {
+		printk("  prefs.json has the companion key \"man_add\".\n");
+		companion = true;
+	}
+	if (companion) {
+		printk("This is a MeshCore companion, not a repeater or room server: its contacts "
+		       "and channels would be lost.\n");
+		return -ENOTSUP;
 	}
 	struct item *id = &items[IT_ID];
 

@@ -40,6 +40,10 @@ and compared byte-for-byte** before DFU is enabled. A write failure is retried 3
 while the log says so, the identity then exists only in RAM.
 
 If no MeshCore identity is found, **nothing is erased**; the board drops to UF2 DFU so you can reflash.
+The same happens on a MeshCore **companion** (any of `/contacts3`, `/channels2`, `/adv_blobs`,
+`/new_prefs`, or the companion key `"man_add"` in `prefs.json`): its contacts and channels have no
+place in a repeater volume. A room server migrates like a repeater (identity, prefs, ACL; MeshCore
+keeps its posts in RAM only); flash ZephCore's room-server `.zip` afterwards.
 If a ZephCore repeater volume is already present it just enables DFU.
 
 ## Build
