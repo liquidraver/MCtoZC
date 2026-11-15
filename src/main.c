@@ -468,6 +468,24 @@ static void wait_for_terminal(void)
 	k_msleep(300);
 }
 
+/*
+ * Last resort when the volume could not be written: the identity is now only in
+ * RAM. Print the private key in the form ZephCore's `set prv.key <hex>` takes
+ * (the 64-byte expanded key; _main.id is pub(32) || prv(64), or prv alone).
+ */
+static void print_private_key(void)
+{
+	const struct item *id = &items[IT_ID];
+	const uint8_t *prv = id->buf + (id->len == ID_LEN_FULL ? ID_LEN_FULL - ID_LEN_PRV : 0);
+
+	printk("Private key (keep it secret). Flash ZephCore, then on its USB console:\n");
+	printk("  set prv.key ");
+	for (int i = 0; i < ID_LEN_PRV; i++) {
+		printk("%02x", prv[i]);
+	}
+	printk("\n");
+}
+
 static void __noreturn reboot_into(uint8_t magic)
 {
 	nrf_power_gpregret_set(NRF_POWER, 0, magic);
@@ -504,10 +522,13 @@ int main(void)
 		}
 		printk("  attempt %d failed (%d)\n", attempt, rc);
 		if (attempt >= 3) {
-			printk("\nMIGRATION FAILED. Do not power off: the identity is only in RAM.\n");
-			printk("Reset to retry (the old volume may already be erased).\n");
+			/* Repeated so a terminal opened late still sees the key. */
 			for (;;) {
-				k_msleep(1000);
+				printk("\nMIGRATION FAILED. Do not power off: the identity is only in "
+				       "RAM.\n");
+				printk("Reset to retry (the old volume may already be erased).\n");
+				print_private_key();
+				k_msleep(10000);
 			}
 		}
 	}

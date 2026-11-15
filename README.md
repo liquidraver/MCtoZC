@@ -37,7 +37,9 @@ MeshCore (Adafruit InternalFS, littlefs **v1**, 128 B blocks, 7×4 KB @ `0xED000
 The two volumes overlap (`0xED000–0xF4000`), so everything is read into RAM first, `storage_partition`
 (NVS bonds, `0xD0000`) and `lfs_partition` are erased, `/lfs` is created and written, then **remounted
 and compared byte-for-byte** before DFU is enabled. A write failure is retried 3×; do not power off
-while the log says so, the identity then exists only in RAM.
+while the log says so, the identity then exists only in RAM. In that state the log repeats the private
+key every 10 s as a `set prv.key <hex>` line: copy it, and after flashing ZephCore paste it on the USB
+console to restore the identity. It is printed only on this failure path.
 
 If no MeshCore identity is found, **nothing is erased**; the board drops to UF2 DFU so you can reflash.
 The same happens on a MeshCore **companion** (any of `/contacts3`, `/channels2`, `/adv_blobs`,
