@@ -55,9 +55,9 @@ If a ZephCore repeater volume is already present it just enables DFU.
 ./build.sh 7      # one
 ```
 
-Both images are built on `nrf52840dk/nrf52840`, a base board that runs no code of its own at boot;
-the overlays turn off its UARTs, NFC and DC/DC (LDO only), so the image drives no pin on the board
-it lands on. Don't build on `rak4631`: its `board.c` sets UICR REGOUT0 (the GPIO/VDD rail) to 3.3 V on
+Both images are built on `nrf52840dk/nrf52840`, a base board without a `board.c`. The overlays turn
+off what its devicetree would do on the board the image lands on: its UARTs (driven TX pins), NFC,
+DC/DC (LDO only) and its `gpio-as-nreset` UICR write. Don't build on `rak4631`: its `board.c` sets UICR REGOUT0 (the GPIO/VDD rail) to 3.3 V on
 any board powered through VDDH, and that stays until a full chip erase.
 
 `tests/host_lfs1_test.c` checks the vendored littlefs-v1 reader on the real MeshCore geometry
